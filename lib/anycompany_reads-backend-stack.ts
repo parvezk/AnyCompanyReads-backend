@@ -3,6 +3,7 @@ import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
 import * as db from "aws-cdk-lib/aws-dynamodb";
 import * as appsync from "aws-cdk-lib/aws-appsync";
+import * as cognito from "aws-cdk-lib/aws-cognito";
 
 // setup a static expiration date for the API KEY
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
@@ -14,6 +15,21 @@ export class AnyCompanyReadsBackendStack extends cdk.Stack {
     super(scope, id, props);
 
     // Configure the User Pool & Client
+    const pool = new cognito.UserPool(this, "UserPool", {
+      userPoolName: "WorkshopUserPool",
+      selfSignUpEnabled: true,
+      autoVerify: { email: true },
+      standardAttributes: { email: { required: true } },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const client = pool.addClient("customer-app-client-web", {
+      preventUserExistenceErrors: true,
+      authFlows: {
+        userPassword: true,
+        userSrp: true,
+      },
+    });
 
     // Define the AppSync API
     const api = new appsync.GraphqlApi(this, "AppSyncBooksAPI", {
@@ -30,6 +46,14 @@ export class AnyCompanyReadsBackendStack extends cdk.Stack {
             expires: cdk.Expiration.atDate(KEY_EXPIRATION_DATE),
           },
         },
+        additionalAuthorizationModes: [
+          {
+            authorizationType: appsync.AuthorizationType.USER_POOL,
+            userPoolConfig: {
+              userPool: pool,
+            },
+          },
+        ],
       },
     });
 
@@ -135,5 +159,9 @@ export class AnyCompanyReadsBackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, "GraphQLAPI_URL", { value: api.graphqlUrl });
     new cdk.CfnOutput(this, "GraphQLAPI_KEY", { value: api.apiKey ?? "" });
     new cdk.CfnOutput(this, "STACK_REGION", { value: this.region });
+    new cdk.CfnOutput(this, "USER_POOLS_ID", { value: pool.userPoolId });
+    new cdk.CfnOutput(this, "USER_POOLS_WEB_CLIENT_ID", {
+      value: client.userPoolClientId,
+    });
   }
 }

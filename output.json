@@ -1,0 +1,10 @@
+{
+  "AnyCompanyReadsBackendStack": {
+    "STACKREGION": "us-east-1",
+    "GraphQLAPIID": "374vcyfwwvhuxlojx2m7annrdq",
+    "GraphQLAPIURL": "https://bdsi2bmuqfe27mnfn37xpcv57a.appsync-api.us-east-1.amazonaws.com/graphql",
+    "GraphQLAPIKEY": "da2-jxjhhjpdlva3zn4o7lezdxk6jq",
+    "USERPOOLSID": "us-east-1_NbqGy5mMZ",
+    "USERPOOLSWEBCLIENTID": "11ffsfonj6vth0qe6ikdj3geh4"
+  }
+}
