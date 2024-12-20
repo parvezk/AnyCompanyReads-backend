@@ -4,6 +4,7 @@ import { Construct } from "constructs";
 import * as db from "aws-cdk-lib/aws-dynamodb";
 import * as appsync from "aws-cdk-lib/aws-appsync";
 import * as cognito from "aws-cdk-lib/aws-cognito";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 
 // setup a static expiration date for the API KEY
 const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
@@ -75,13 +76,46 @@ export class AnyCompanyReadsBackendStack extends cdk.Stack {
     });
 
     // Define the custom auth Lambda function
+    const customAuthFunction = new lambda.Function(this, "CustomAuthFunction", {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset("lambda/custom-auth"),
+      environment: {
+        ALLOW: "true",
+      },
+    });
 
     // Set up table as a data source
     const dataSource = api.addDynamoDbDataSource("BooksTableSource", table);
 
     // Set up custom auth lambda function as a data source
+    const lambdaDataSource = api.addLambdaDataSource(
+      "CustomAuthLambda",
+      customAuthFunction
+    );
 
     // Define AppSync functions for Pipeline resolvers
+    const appsyncCustomAuthFunction = lambdaDataSource.createFunction(
+      "AppSyncCustomAuthFunction",
+      {
+        name: "AppSyncCustomAuthFunction",
+        code: appsync.Code.fromAsset(
+          "appsync/resolvers/booksApi/js/customAuthFunction.js"
+        ),
+        runtime: appsync.FunctionRuntime.JS_1_0_0,
+      }
+    );
+
+    const appsyncListBooksByGenreFunction = dataSource.createFunction(
+      "AppSyncListBooksByGenreFunction",
+      {
+        name: "AppSyncListBooksByGenreFunction",
+        code: appsync.Code.fromAsset(
+          "appsync/resolvers/booksApi/js/queryListBooksByGenre.js"
+        ),
+        runtime: appsync.FunctionRuntime.JS_1_0_0,
+      }
+    );
 
     // Define resolvers
     api.createResolver("MutationCreateBookResolver", {
@@ -152,6 +186,17 @@ export class AnyCompanyReadsBackendStack extends cdk.Stack {
         "appsync/resolvers/booksApi/js/queryBooksByPublisherIndex.js"
       ),
       runtime: appsync.FunctionRuntime.JS_1_0_0,
+    });
+
+    api.createResolver("QueryListBooksByGenreResolver", {
+      typeName: "Query",
+      fieldName: "listBooksByGenre",
+      code: appsync.Code.fromAsset("appsync/resolvers/booksApi/js/default.js"),
+      runtime: appsync.FunctionRuntime.JS_1_0_0,
+      pipelineConfig: [
+        appsyncCustomAuthFunction,
+        appsyncListBooksByGenreFunction,
+      ],
     });
 
     // Stack outputs

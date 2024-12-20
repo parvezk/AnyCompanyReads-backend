@@ -119,6 +119,11 @@ type Query {
     limit: Int
     nextToken: String
   ): BookConnection @aws_api_key @aws_cognito_user_pools
+  listBooksByGenre(
+    genre: String!
+    limit: Int
+    nextToken: String
+  ): BookConnection @aws_api_key @aws_cognito_user_pools
   queryBooksByAuthorIndex(
     authorId: ID!
     first: Int
