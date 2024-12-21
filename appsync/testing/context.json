@@ -1,0 +1,25 @@
+{
+  "arguments": {
+    "input": {
+      "title": "The Cat in the Hat",
+      "authorId": "789",
+      "publisherId": "101112",
+      "publicationYear": 1957
+    }
+  },
+  "source": {},
+  "result": {
+    "title": "The Cat in the Hat",
+    "authorId": "789",
+    "publisherId": "101112",
+    "publicationYear": 1957
+  },
+  "identity": {
+    "sub": "uuid",
+    "issuer": "https://cognito-idp.{region}.amazonaws.com/{userPoolId}",
+    "username": "tester",
+    "claims": {},
+    "sourceIp": ["x.x.x.x"],
+    "defaultAuthStrategy": "ALLOW"
+  }
+}
